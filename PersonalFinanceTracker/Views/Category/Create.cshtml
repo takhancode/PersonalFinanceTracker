@@ -1,0 +1,19 @@
+﻿@model PersonalFinanceTracker.Models.Category
+
+<h2>Add Category</h2>
+
+<form method="post">
+    <div class="mb-3">
+        <label>Name</label>
+        <input name="Name" type="text" class="form-control" placeholder="e.g. Food, Rent, Salary" />
+    </div>
+    <div class="mb-3">
+        <label>Type</label>
+        <select name="Type" class="form-control">
+            <option value="Expense">Expense</option>
+            <option value="Income">Income</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-success">Save</button>
+    <a href="/Category/Index" class="btn btn-secondary">Cancel</a>
+</form>

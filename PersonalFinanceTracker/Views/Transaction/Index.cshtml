@@ -1,0 +1,28 @@
+﻿@model IEnumerable<PersonalFinanceTracker.Models.Transaction>
+
+<h2>My Transactions</h2>
+<a href="/Transaction/Create" class="btn btn-primary mb-3">+ Add Transaction</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Date.ToString("dd MMM yyyy")</td>
+                <td>@item.Type</td>
+                <td>@(item.Category?.Name ?? "N/A")</td>
+                <td>Rs. @item.Amount</td>
+                <td>@item.Description</td>
+            </tr>
+        }
+    </tbody>
+</table>
