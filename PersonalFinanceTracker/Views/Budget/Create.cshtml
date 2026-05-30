@@ -1,0 +1,73 @@
+@model PersonalFinanceTracker.Models.Budget
+
+@{
+    ViewData["Title"] = "Set Budget Limit";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="row">
+            <!-- Form Card -->
+            <div class="col-md-7">
+                <div class="custom-card">
+                    <h3 class="mb-2 text-white">Set Budget Limit</h3>
+                    <p class="text-secondary mb-4">Define a limit for a specific category and calendar month.</p>
+
+                    <form method="post" asp-action="Create">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-4">
+                            <label asp-for="CategoryId" class="form-label">Expense Category</label>
+                            <select asp-for="CategoryId" class="form-select">
+                                @if (ViewBag.Categories != null)
+                                {
+                                    @foreach (var cat in ViewBag.Categories)
+                                    {
+                                        <option value="@cat.CategoryId">@cat.Name</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="CategoryId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="MonthYear" class="form-label">Month & Year</label>
+                            <input asp-for="MonthYear" type="month" class="form-control" value="@DateTime.Now.ToString("yyyy-MM")" required />
+                            <span asp-validation-for="MonthYear" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="LimitAmount" class="form-label">Spending Limit (Rs.)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-secondary">Rs.</span>
+                                <input asp-for="LimitAmount" type="number" step="0.01" class="form-control" placeholder="0.00" required />
+                            </div>
+                            <span asp-validation-for="LimitAmount" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex gap-3 mt-5">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fa-solid fa-check me-2"></i>Save Budget
+                            </button>
+                            <a href="/Budget/Index" class="btn btn-secondary px-4">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Side Card Info -->
+            <div class="col-md-5">
+                <div class="custom-card d-flex flex-column align-items-center justify-content-center text-center h-100 py-5">
+                    <span class="d-inline-flex align-items-center justify-content-center bg-dark text-success rounded-circle mb-4" style="width: 75px; height: 75px;">
+                        <i class="fa-solid fa-wallet fs-1 text-success"></i>
+                    </span>
+                    <h4 class="text-white">Budget Settings</h4>
+                    <p class="text-secondary px-3">
+                        Select a category, specify the year and month, and set a maximum limit. You will see progress charts and alert flags on the dashboard and budgets page.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

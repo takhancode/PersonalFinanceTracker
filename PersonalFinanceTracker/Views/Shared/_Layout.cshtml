@@ -1,50 +1,290 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - PersonalFinanceTracker</title>
+
+    <script>
+        // Immediately load saved theme and sidebar collapse state to prevent layout flashing (FOUC)
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                document.querySelector('.app-shell').classList.add('sidebar-collapsed');
+                const toggleBtn = document.getElementById('sidebarCollapseToggle');
+                if (toggleBtn) {
+                    const icon = toggleBtn.querySelector('i');
+                    if (icon) icon.className = 'fa-solid fa-angle-right';
+                }
+            }
+        });
+    </script>
+
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/PersonalFinanceTracker.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">PersonalFinanceTracker</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+
+    <!-- ================================================================
+         SIDEBAR OVERLAY (mobile backdrop)
+    ================================================================ -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- ================================================================
+         APP SHELL
+    ================================================================ -->
+    <div class="app-shell">
+
+        <!-- ============================================================
+             SIDEBAR
+        ============================================================ -->
+        <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+
+            <!-- Brand Header with Desktop Collapse Button -->
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-wrapper">
+                    <div class="sidebar-brand-icon">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <span class="sidebar-brand-name">Wallet App</span>
+                        <span class="sidebar-brand-tagline">Personal Tracker</span>
+                    </div>
+                </div>
+                <button class="sidebar-collapse-toggle" id="sidebarCollapseToggle" onclick="toggleSidebarCollapse()" title="Collapse Sidebar" aria-label="Collapse Sidebar">
+                    <i class="fa-solid fa-angle-left"></i>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                    <partial name="_LoginPartial" />
+            </div>
+
+            <!-- Profile Card -->
+            <div class="sidebar-profile">
+                <div class="profile-avatar">
+                    @(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
+                </div>
+                <div class="profile-info">
+                    <h6 class="profile-name">@(User.Identity?.Name?.Split('@')[0] ?? "Guest User")</h6>
+                    <span class="profile-role">Personal Plan</span>
                 </div>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - PersonalFinanceTracker - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
+            <!-- Navigation Links with Tooltips -->
+            <div class="sidebar-nav">
+                <p class="sidebar-section-label">General</p>
+                <ul class="nav-list" role="list">
+                    <li class="nav-list-item">
+                        <a asp-area="" asp-controller="Home" asp-action="Index" data-tooltip="Dashboard"
+                           class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
+                            <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
+                            <span class="nav-label">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-list-item">
+                        <a asp-area="" asp-controller="Category" asp-action="Index" data-tooltip="Categories"
+                           class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Category" ? "active" : "")">
+                            <span class="nav-icon"><i class="fa-solid fa-tags"></i></span>
+                            <span class="nav-label">Categories</span>
+                        </a>
+                    </li>
+                    <li class="nav-list-item">
+                        <a asp-area="" asp-controller="Transaction" asp-action="Index" data-tooltip="Transactions"
+                           class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Transaction" ? "active" : "")">
+                            <span class="nav-icon"><i class="fa-solid fa-arrow-right-arrow-left"></i></span>
+                            <span class="nav-label">Transactions</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="sidebar-divider"></div>
+
+                <p class="sidebar-section-label">Extras</p>
+                <ul class="nav-list" role="list">
+                    <li class="nav-list-item">
+                        <a asp-area="" asp-controller="Budget" asp-action="Index" data-tooltip="Budgets"
+                           class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Budget" ? "active" : "")">
+                            <span class="nav-icon"><i class="fa-solid fa-wallet"></i></span>
+                            <span class="nav-label">Budgets</span>
+                        </a>
+                    </li>
+                    <li class="nav-list-item">
+                        <a asp-area="" asp-controller="Report" asp-action="Index" data-tooltip="Reports"
+                           class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Report" ? "active" : "")">
+                            <span class="nav-icon"><i class="fa-solid fa-chart-simple"></i></span>
+                            <span class="nav-label">Reports</span>
+                        </a>
+                    </li>
+                    <li class="nav-list-item">
+                        <a asp-area="" asp-controller="Home" asp-action="Privacy" data-tooltip="Privacy"
+                           class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Privacy" ? "active" : "")">
+                            <span class="nav-icon"><i class="fa-solid fa-shield-halved"></i></span>
+                            <span class="nav-label">Privacy</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- User / Login Partial -->
+            <div class="sidebar-user">
+                <partial name="_LoginPartial" />
+            </div>
+        </aside>
+
+        <!-- ============================================================
+             MAIN CONTENT WRAPPER
+        ============================================================ -->
+        <div class="main-wrapper">
+
+            <!-- Top Bar -->
+            <header class="topbar" role="banner">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle" id="sidebarToggle"
+                            aria-label="Toggle sidebar" aria-expanded="false" aria-controls="sidebar"
+                            onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <span class="topbar-page-title">@(ViewData["Title"] ?? "Dashboard")</span>
+                </div>
+                
+                <div class="topbar-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="topbarSearchInput" placeholder="Search transactions..." aria-label="Search" value="@ViewBag.SearchTerm" onkeydown="if(event.key === 'Enter') performSearch()" />
+                </div>
+
+                <div class="topbar-right">
+                    <!-- Dynamic Light/Dark Theme Toggle Button -->
+                    <button class="topbar-icon-btn me-1" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Theme" aria-label="Toggle Theme">
+                        <i class="fa-solid fa-moon" id="themeToggleIcon"></i>
+                    </button>
+                    <div class="topbar-user-chip" role="button" tabindex="0" aria-label="User account">
+                        <div class="topbar-user-chip-avatar">
+                            @(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
+                        </div>
+                        <span class="topbar-user-chip-label">@(User.Identity?.Name?.Split('@')[0] ?? "Guest")</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Body -->
+            <main class="page-content animate-fade-in-up" role="main" id="main-content">
+                @RenderBody()
+            </main>
+
+            <!-- Footer -->
+            <footer class="app-footer" role="contentinfo">
+                <span class="footer-copy">
+                    &copy; 2026 PersonalFinanceTracker &mdash;
+                    <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy Policy</a>
+                </span>
+                <span class="footer-version">v1.0</span>
+            </footer>
+
+        </div><!-- /.main-wrapper -->
+
+    </div><!-- /.app-shell -->
+
+    <!-- ================================================================
+         SCRIPTS
+    ================================================================ -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        // ---- Theme Manager ----
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeToggleIcon(newTheme);
+            
+            // Dispatch dynamic window event so charts can repaint instantly
+            window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
+        }
+
+        function updateThemeToggleIcon(theme) {
+            const icon = document.getElementById('themeToggleIcon');
+            if (icon) {
+                if (theme === 'dark') {
+                    icon.className = 'fa-solid fa-moon';
+                } else {
+                    icon.className = 'fa-solid fa-sun';
+                }
+            }
+        }
+
+        // Initial Theme Icon Alignment
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            updateThemeToggleIcon(currentTheme);
+        });
+
+        // ---- Desktop Sidebar Collapse Manager ----
+        function toggleSidebarCollapse() {
+            const shell = document.querySelector('.app-shell');
+            const toggleBtn = document.getElementById('sidebarCollapseToggle');
+            const isCollapsed = shell.classList.toggle('sidebar-collapsed');
+            localStorage.setItem('sidebarCollapsed', isCollapsed ? 'true' : 'false');
+            
+            if (toggleBtn) {
+                const icon = toggleBtn.querySelector('i');
+                if (icon) {
+                    icon.className = isCollapsed ? 'fa-solid fa-angle-right' : 'fa-solid fa-angle-left';
+                }
+            }
+        }
+
+        // ---- Sidebar toggle (mobile) ----
+        function toggleSidebar() {
+            const sidebar  = document.getElementById('sidebar');
+            const overlay  = document.getElementById('sidebarOverlay');
+            const toggle   = document.getElementById('sidebarToggle');
+            const isOpen   = sidebar.classList.contains('is-open');
+
+            sidebar.classList.toggle('is-open', !isOpen);
+            overlay.classList.toggle('is-open', !isOpen);
+            toggle.setAttribute('aria-expanded', String(!isOpen));
+            document.body.style.overflow = isOpen ? '' : 'hidden';
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const toggle  = document.getElementById('sidebarToggle');
+
+            sidebar.classList.remove('is-open');
+            overlay.classList.remove('is-open');
+            toggle.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
+        }
+
+        // Close sidebar when resizing back to desktop
+        window.addEventListener('resize', function () {
+            if (window.innerWidth >= 992) {
+                closeSidebar();
+            }
+        });
+
+        // Keyboard: close sidebar on Escape
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeSidebar();
+        });
+
+        // ---- Search Manager ----
+        function performSearch() {
+            const query = document.getElementById('topbarSearchInput').value.trim();
+            window.location.href = '/Transaction/Index?search=' + encodeURIComponent(query);
+        }
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

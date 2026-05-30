@@ -1,8 +1,398 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model IEnumerable<PersonalFinanceTracker.Models.Transaction>
+
+@{
+    ViewData["Title"] = "Dashboard";
+    var totalIncome = ViewBag.TotalIncome as decimal? ?? 0;
+    var totalExpense = ViewBag.TotalExpense as decimal? ?? 0;
+    var balance = ViewBag.Balance as decimal? ?? 0;
+    var budgets = ViewBag.Budgets as List<PersonalFinanceTracker.Controllers.HomeController.BudgetProgressViewModel> ?? new List<PersonalFinanceTracker.Controllers.HomeController.BudgetProgressViewModel>();
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- Custom Styles for Dashboard Components -->
+<style>
+    .stat-card {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        background: var(--content-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    .stat-card-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+    .stat-card-income {
+        background-color: var(--income-bg);
+        color: var(--income);
+        border: 1px solid rgba(34,197,94,0.2);
+    }
+    .stat-card-expense {
+        background-color: var(--expense-bg);
+        color: var(--expense);
+        border: 1px solid rgba(239,68,68,0.2);
+    }
+    .stat-card-balance {
+        background-color: var(--balance-bg);
+        color: var(--balance);
+        border: 1px solid rgba(59,130,246,0.2);
+    }
+    .stat-card-title {
+        font-size: 13.5px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+    .stat-card-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    .budget-bullet {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .budget-bullet:last-child {
+        border-bottom: none;
+    }
+</style>
+
+<!-- Top Statistics Row -->
+<div class="row g-4 mb-4">
+    <!-- Total Income Card -->
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-card-income">
+                <i class="fa-solid fa-money-bill-trend-up"></i>
+            </div>
+            <div>
+                <span class="stat-card-title">Total Income</span>
+                <h3 class="stat-card-value">Rs. @totalIncome.ToString("N2")</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Expense Card -->
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-card-expense">
+                <i class="fa-solid fa-money-bill-transfer"></i>
+            </div>
+            <div>
+                <span class="stat-card-title">Total Expense</span>
+                <h3 class="stat-card-value">Rs. @totalExpense.ToString("N2")</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Balance Card -->
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-card-balance">
+                <i class="fa-solid fa-scale-balanced"></i>
+            </div>
+            <div>
+                <span class="stat-card-title">Balance</span>
+                <h3 class="stat-card-value @(balance >= 0 ? "text-success" : "text-danger")">Rs. @balance.ToString("N2")</h3>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Charts Row -->
+<div class="row mb-4 g-4">
+    <!-- Expense By Category Doughnut -->
+    <div class="col-lg-5">
+        <div class="custom-card">
+            <h5 class="text-white mb-4">Expense By Category</h5>
+            <div class="chart-container d-flex align-items-center justify-content-center">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Income vs Expense Spline -->
+    <div class="col-lg-7">
+        <div class="custom-card">
+            <h5 class="text-white mb-4">Income vs Expense Trend</h5>
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Details Row -->
+<div class="row g-4">
+    <!-- Recent Transactions List -->
+    <div class="col-lg-7">
+        <div class="custom-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="text-white mb-0">Recent Transactions</h5>
+                <a href="/Transaction/Index" class="btn btn-secondary btn-sm py-1 px-3">View All</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="custom-table" style="font-size: 13.5px;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Type</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    No transactions logged yet.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="text-secondary">@item.Date.ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="category-icon-wrapper @(item.Category?.Type == "Income" ? "category-icon-income" : "category-icon-expense")" style="width: 26px; height: 26px; font-size: 11px;">
+                                                <i class="@(string.IsNullOrEmpty(item.Category?.Icon) ? "fa-solid fa-tag" : item.Category.Icon)"></i>
+                                            </span>
+                                            <span class="fw-semibold">@(item.Category?.Name ?? "General")</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="@(item.Type == "Income" ? "badge-income" : "badge-expense")" style="padding: 3px 8px; font-size: 11px;">
+                                            @item.Type
+                                        </span>
+                                    </td>
+                                    <td class="text-end fw-bold @(item.Type == "Income" ? "text-success" : "text-danger")">
+                                        @(item.Type == "Income" ? "+" : "-") Rs. @item.Amount.ToString("N0")
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budgets Summary -->
+    <div class="col-lg-5">
+        <div class="custom-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="text-white mb-0">Active Budgets</h5>
+                <a href="/Budget/Index" class="btn btn-secondary btn-sm py-1 px-3">Manage</a>
+            </div>
+
+            @if (!budgets.Any())
+            {
+                <div class="text-center text-muted py-5">
+                    <i class="fa-solid fa-wallet fs-2 d-block mb-2"></i>
+                    No budgets set for this month.
+                </div>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var b in budgets)
+                    {
+                        var percentage = Math.Min(b.Percentage, 100);
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-white fw-semibold small">
+                                    <i class="@b.Icon me-1 text-secondary"></i> @b.CategoryName
+                                </span>
+                                <span class="small @(b.Exceeded ? "text-danger fw-bold" : "text-secondary")">
+                                    Rs. @b.Spent.ToString("N0") / @b.Limit.ToString("N0")
+                                </span>
+                            </div>
+                            <div class="budget-progress-bar-bg" style="height: 6px;">
+                                <div class="budget-progress-bar-fill @(b.Exceeded ? "budget-progress-warning" : "budget-progress-normal")"
+                                     style="width: @percentage%"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Include Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Global references to update dynamically on theme change
+        let categoryChartInstance = null;
+        let trendChartInstance = null;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // Get initial theme configurations
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const initialTextColor = currentTheme === 'dark' ? '#94a3b8' : '#475569';
+            const initialGridColor = currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)';
+            const initialBorderColor = currentTheme === 'dark' ? '#131924' : '#ffffff';
+
+            // ---- Category Expenses Chart ----
+            const catLabels = @Html.Raw(Json.Serialize(ViewBag.DoughnutLabels));
+            const catData = @Html.Raw(Json.Serialize(ViewBag.DoughnutData));
+
+            if (catLabels && catLabels.length > 0) {
+                const ctx1 = document.getElementById('categoryChart').getContext('2d');
+                categoryChartInstance = new Chart(ctx1, {
+                    type: 'doughnut',
+                    data: {
+                        labels: catLabels,
+                        datasets: [{
+                            data: catData,
+                            backgroundColor: [
+                                '#10b981', // green
+                                '#ef4444', // red
+                                '#3b82f6', // blue
+                                '#f59e0b', // amber
+                                '#8b5cf6', // purple
+                                '#ec4899', // pink
+                                '#06b6d4'  // cyan
+                            ],
+                            borderWidth: 3,
+                            borderColor: initialBorderColor,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: initialTextColor,
+                                    font: { family: 'Inter', size: 12 },
+                                    padding: 15
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                const canvas = document.getElementById('categoryChart');
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#64748b';
+                ctx.font = '14px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('No Expense Logs available', canvas.width / 2, canvas.height / 2);
+            }
+
+            // ---- Income vs Expense Trend Chart ----
+            const trendLabels = @Html.Raw(Json.Serialize(ViewBag.TrendLabels));
+            const trendIncome = @Html.Raw(Json.Serialize(ViewBag.TrendIncome));
+            const trendExpense = @Html.Raw(Json.Serialize(ViewBag.TrendExpense));
+
+            const ctx2 = document.getElementById('trendChart').getContext('2d');
+            trendChartInstance = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: trendLabels,
+                    datasets: [
+                        {
+                            label: 'Income',
+                            data: trendIncome,
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.05)',
+                            fill: true,
+                            tension: 0.35,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Expense',
+                            data: trendExpense,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                            fill: true,
+                            tension: 0.35,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: initialTextColor,
+                                font: { family: 'Inter', size: 12 }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: initialGridColor },
+                            ticks: { color: initialTextColor, font: { family: 'Inter' } }
+                        },
+                        y: {
+                            grid: { color: initialGridColor },
+                            ticks: { color: initialTextColor, font: { family: 'Inter' } }
+                        }
+                    }
+                }
+            });
+        });
+
+        // Theme Change Listener - dynamically transitions chart layouts
+        window.addEventListener('themeChanged', function (e) {
+            const theme = e.detail.theme;
+            const textColor = theme === 'dark' ? '#94a3b8' : '#475569';
+            const gridColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)';
+            const borderColor = theme === 'dark' ? '#131924' : '#ffffff';
+
+            if (categoryChartInstance) {
+                categoryChartInstance.options.plugins.legend.labels.color = textColor;
+                categoryChartInstance.data.datasets[0].borderColor = borderColor;
+                categoryChartInstance.update();
+            }
+
+            if (trendChartInstance) {
+                trendChartInstance.options.plugins.legend.labels.color = textColor;
+                trendChartInstance.options.scales.x.grid.color = gridColor;
+                trendChartInstance.options.scales.x.ticks.color = textColor;
+                trendChartInstance.options.scales.y.grid.color = gridColor;
+                trendChartInstance.options.scales.y.ticks.color = textColor;
+                trendChartInstance.update();
+            }
+        });
+    </script>
+}

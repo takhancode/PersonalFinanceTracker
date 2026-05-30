@@ -1,0 +1,130 @@
+@model IEnumerable<PersonalFinanceTracker.Controllers.BudgetController.BudgetViewModel>
+
+@{
+    ViewData["Title"] = "Budgets";
+}
+
+<div class="row">
+    <!-- Left Column: Budgets List -->
+    <div class="col-lg-8">
+        <div class="custom-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="mb-1"><span class="gradient-heading">Budgets</span></h3>
+                    <p class="text-secondary mb-0">Set monthly spending limits by category to control your expenses.</p>
+                </div>
+                <a href="/Budget/Create" class="btn btn-primary">
+                    <i class="fa-solid fa-plus me-2"></i>Set Budget Limit
+                </a>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="text-center text-muted py-5 border border-secondary border-dashed rounded" style="border-style: dashed !important; border-width: 1px !important;">
+                    <i class="fa-solid fa-wallet fs-1 d-block mb-3 text-secondary"></i>
+                    No budgets configured yet. Click "Set Budget Limit" to start tracking.
+                </div>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-4">
+                    @foreach (var item in Model)
+                    {
+                        var percentage = Math.Min(item.ProgressPercentage, 100);
+                        var parsedDateStr = item.Budget.MonthYear;
+                        if (DateTime.TryParseExact(item.Budget.MonthYear, "yyyy-MM", null, System.Globalization.DateTimeStyles.None, out var dateParsed))
+                        {
+                            parsedDateStr = dateParsed.ToString("MMMM yyyy");
+                        }
+
+                        <div class="p-3 rounded border" style="background-color: rgba(255,255,255,0.01); border-color: var(--border-color) !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center">
+                                    <span class="category-icon-wrapper category-icon-expense">
+                                        <i class="@(string.IsNullOrEmpty(item.Budget.Category?.Icon) ? "fa-solid fa-tag" : item.Budget.Category.Icon)"></i>
+                                    </span>
+                                    <div>
+                                        <h5 class="text-white mb-0">@(item.Budget.Category?.Name ?? "General Expense")</h5>
+                                        <span class="text-muted small">@parsedDateStr</span>
+                                    </div>
+                                </div>
+
+                                <div class="text-end">
+                                    <span class="d-block text-white fw-bold">
+                                        Rs. @item.SpentAmount.ToString("N0") / Rs. @item.LimitAmount.ToString("N0")
+                                    </span>
+                                    @if (item.IsOverBudget)
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill small px-2 py-1" style="font-size: 11px;">
+                                            <i class="fa-solid fa-circle-exclamation me-1"></i>Exceeded
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small px-2 py-1" style="font-size: 11px; background-color: rgba(34,197,94,0.1)">
+                                            <i class="fa-solid fa-circle-check me-1"></i>On Track
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Budget progress bar -->
+                            <div class="budget-progress-container mb-3">
+                                <div class="budget-progress-label">
+                                    <span>Spending Progress</span>
+                                    <span>@item.ProgressPercentage.ToString("F0")% Spent</span>
+                                </div>
+                                <div class="budget-progress-bar-bg">
+                                    <div class="budget-progress-bar-fill @(item.IsOverBudget ? "budget-progress-warning" : "budget-progress-normal")"
+                                         style="width: @percentage%"></div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2 mt-2">
+                                <a href="/Budget/Edit/@item.Budget.BudgetId" class="btn btn-secondary btn-sm py-1 px-3" title="Edit Budget Limit">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i>Edit
+                                </a>
+                                <a href="/Budget/Delete/@item.Budget.BudgetId" class="btn btn-danger btn-sm py-1 px-3" title="Delete Budget Limit">
+                                    <i class="fa-solid fa-trash-can me-1"></i>Delete
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Right Column: Info & Summary -->
+    <div class="col-lg-4">
+        <div class="custom-card text-center py-4 px-3 mb-4">
+            <div class="my-3">
+                <span class="d-inline-flex align-items-center justify-content-center bg-dark text-success rounded-circle" style="width: 70px; height: 70px;">
+                    <i class="fa-solid fa-wallet fs-1 text-success"></i>
+                </span>
+            </div>
+            <h4 class="text-white mt-3">Smart Budgeting</h4>
+            <p class="text-secondary px-2">Setting monthly budgets keeps you accountable and helps you identify which categories are causing overspending.</p>
+        </div>
+
+        <div class="custom-card">
+            <h5 class="text-white mb-3">Budget Status Guide</h5>
+            <div class="d-flex flex-column gap-3 small">
+                <div class="d-flex gap-2">
+                    <span class="text-success"><i class="fa-solid fa-circle"></i></span>
+                    <div class="text-secondary">
+                        <strong class="text-white d-block">On Track (0% - 100%)</strong>
+                        Your total monthly expenses for the category are within the budget limit.
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="text-danger"><i class="fa-solid fa-circle"></i></span>
+                    <div class="text-secondary">
+                        <strong class="text-white d-block">Exceeded (&gt; 100%)</strong>
+                        Your spending has gone past the monthly limit. Consider cutting down or updating limits.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

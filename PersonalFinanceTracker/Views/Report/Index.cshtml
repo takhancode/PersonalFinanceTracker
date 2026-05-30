@@ -1,0 +1,173 @@
+@model IEnumerable<PersonalFinanceTracker.Models.Transaction>
+
+@{
+    ViewData["Title"] = "Financial Reports";
+    var totalIncome = Model.Where(t => t.Type == "Income").Sum(t => t.Amount);
+    var totalExpense = Model.Where(t => t.Type == "Expense").Sum(t => t.Amount);
+    var netSavings = totalIncome - totalExpense;
+}
+
+
+
+<!-- Print Only Header -->
+<div class="print-header">
+    <h2>Personal Finance Tracker</h2>
+    <h5>Financial Summary Statement</h5>
+    <p class="text-muted small">Generated on: @DateTime.Now.ToString("dd MMM yyyy HH:mm")</p>
+    @if (!string.IsNullOrEmpty(ViewBag.StartDate) || !string.IsNullOrEmpty(ViewBag.EndDate))
+    {
+        <p class="small">
+            Statement Period: 
+            @(string.IsNullOrEmpty(ViewBag.StartDate) ? "Beginning" : ViewBag.StartDate) 
+            to 
+            @(string.IsNullOrEmpty(ViewBag.EndDate) ? "Today" : ViewBag.EndDate)
+        </p>
+    }
+</div>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 btn-print-action">
+    <div>
+        <h3 class="mb-1"><span class="gradient-heading">Financial Reports</span></h3>
+        <p class="text-secondary mb-0">Generate, analyze, and print statement ledgers for your finances.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <!-- Filter Form Console (Web only) -->
+        <div class="custom-card filter-card mb-4">
+            <h5 class="text-white mb-3"><i class="fa-solid fa-sliders me-2"></i>Filter Statements</h5>
+            <form method="get" action="/Report/Index">
+                <div class="row g-3">
+                    <!-- Category Selection -->
+                    <div class="col-md-3">
+                        <label class="form-label">Category</label>
+                        <select name="categoryId" class="form-select">
+                            <option value="">All Categories</option>
+                            @if (ViewBag.Categories != null)
+                            {
+                                @foreach (var cat in ViewBag.Categories)
+                                {
+                                    <option value="@cat.CategoryId" selected="@(ViewBag.SelectedCategory?.ToString() == cat.CategoryId.ToString() ? "selected" : null)">
+                                        @cat.Name (@cat.Type)
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Type Selection -->
+                    <div class="col-md-2">
+                        <label class="form-label">Type</label>
+                        <select name="type" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="Income" selected="@(ViewBag.SelectedType == "Income" ? "selected" : null)">Income</option>
+                            <option value="Expense" selected="@(ViewBag.SelectedType == "Expense" ? "selected" : null)">Expense</option>
+                        </select>
+                    </div>
+
+                    <!-- Start Date -->
+                    <div class="col-md-2.5 col-sm-6">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" name="startDate" class="form-control" value="@ViewBag.StartDate" />
+                    </div>
+
+                    <!-- End Date -->
+                    <div class="col-md-2.5 col-sm-6">
+                        <label class="form-label">End Date</label>
+                        <input type="date" name="endDate" class="form-control" value="@ViewBag.EndDate" />
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="col-md-2 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary w-50" title="Apply Filters">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                        <a href="/Report/Index" class="btn btn-secondary w-50 text-center" title="Reset Filters">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Report Summary Stats -->
+        <div class="custom-card report-summary-box mb-4">
+            <div class="row g-4 text-center">
+                <div class="col-sm-3 col-6 border-end border-secondary">
+                    <span class="text-secondary small d-block mb-1">Total Income</span>
+                    <h4 class="text-success fw-bold mb-0">Rs. @totalIncome.ToString("N2")</h4>
+                </div>
+                <div class="col-sm-3 col-6 border-end border-secondary">
+                    <span class="text-secondary small d-block mb-1">Total Expense</span>
+                    <h4 class="text-danger fw-bold mb-0">Rs. @totalExpense.ToString("N2")</h4>
+                </div>
+                <div class="col-sm-3 col-6 border-end border-secondary">
+                    <span class="text-secondary small d-block mb-1">Net Savings</span>
+                    <h4 class="@(netSavings >= 0 ? "text-success" : "text-danger") fw-bold mb-0">Rs. @netSavings.ToString("N2")</h4>
+                </div>
+                <div class="col-sm-3 col-6">
+                    <span class="text-secondary small d-block mb-1">Logged Events</span>
+                    <h4 class="text-white fw-bold mb-0">@Model.Count()</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions Details Card -->
+        <div class="custom-card">
+            <div class="d-flex justify-content-between align-items-center mb-4 btn-print-action">
+                <h5 class="text-white mb-0">Statement Ledger</h5>
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="fa-solid fa-file-pdf me-2"></i>Export PDF / Print Report
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Type</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-5">
+                                    No records found matching the filter criteria.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="text-secondary">@item.Date.ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="category-icon-wrapper @(item.Category?.Type == "Income" ? "category-icon-income" : "category-icon-expense") print-hide" style="width: 24px; height: 24px; font-size: 11px;">
+                                                <i class="@(string.IsNullOrEmpty(item.Category?.Icon) ? "fa-solid fa-tag" : item.Category.Icon)"></i>
+                                            </span>
+                                            <span class="fw-semibold">@(item.Category?.Name ?? "Uncategorized")</span>
+                                        </div>
+                                    </td>
+                                    <td>@(string.IsNullOrEmpty(item.Description) ? "-" : item.Description)</td>
+                                    <td>@item.Type</td>
+                                    <td class="text-end fw-bold @(item.Type == "Income" ? "text-success" : "text-danger")">
+                                        @(item.Type == "Income" ? "+" : "-") Rs. @item.Amount.ToString("N2")
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

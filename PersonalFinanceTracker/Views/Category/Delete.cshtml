@@ -1,0 +1,54 @@
+@model PersonalFinanceTracker.Models.Category
+
+@{
+    ViewData["Title"] = "Delete Category";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="custom-card border border-danger">
+            <div class="text-center my-3">
+                <span class="d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle" style="width: 70px; height: 70px; background-color: rgba(239, 68, 68, 0.15)">
+                    <i class="fa-solid fa-triangle-exclamation fs-1 text-danger"></i>
+                </span>
+            </div>
+            
+            <h3 class="text-white text-center mt-3 mb-2">Delete Category?</h3>
+            <p class="text-secondary text-center px-3 mb-4">
+                Are you sure you want to delete the category <strong class="text-white">@Model.Name</strong>? This action cannot be undone.
+            </p>
+
+            <div class="bg-dark p-3 rounded mb-4">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-secondary">Category:</span>
+                    <span class="text-white fw-bold">@Model.Name</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-secondary">Type:</span>
+                    <span class="@(Model.Type == "Income" ? "text-success" : "text-danger") fw-bold">@Model.Type</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-secondary">Icon:</span>
+                    <span class="text-white"><i class="@Model.Icon me-1"></i> (@Model.Icon)</span>
+                </div>
+            </div>
+
+            <div class="alert alert-warning border-0 bg-warning-subtle text-warning small mb-4" style="background-color: rgba(245, 158, 11, 0.1)">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                <strong>Warning:</strong> Deleting this category will delete all transactions and budgets associated with it.
+            </div>
+
+            <form method="post" asp-action="Delete">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="CategoryId" />
+                
+                <div class="d-flex gap-3">
+                    <button type="submit" class="btn btn-danger w-50">
+                        <i class="fa-solid fa-trash-can me-2"></i>Confirm Delete
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary w-50 text-center">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

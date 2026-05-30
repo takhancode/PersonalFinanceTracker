@@ -1,28 +1,134 @@
-﻿@model IEnumerable<PersonalFinanceTracker.Models.Transaction>
+@model IEnumerable<PersonalFinanceTracker.Models.Transaction>
 
-<h2>My Transactions</h2>
-<a href="/Transaction/Create" class="btn btn-primary mb-3">+ Add Transaction</a>
+@{
+    ViewData["Title"] = "Transactions";
+    var totalTransactions = Model.Count();
+    var totalIncome = Model.Where(t => t.Type == "Income").Sum(t => t.Amount);
+    var totalExpense = Model.Where(t => t.Type == "Expense").Sum(t => t.Amount);
+}
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Category</th>
-            <th>Amount</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.Date.ToString("dd MMM yyyy")</td>
-                <td>@item.Type</td>
-                <td>@(item.Category?.Name ?? "N/A")</td>
-                <td>Rs. @item.Amount</td>
-                <td>@item.Description</td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div class="row">
+    <!-- Left Column: Transactions List -->
+    <div class="col-lg-9">
+        <div class="custom-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="mb-1"><span class="gradient-heading">Transactions</span></h3>
+                    @if (!string.IsNullOrEmpty(ViewBag.SearchTerm as string))
+                    {
+                        <p class="text-secondary mb-0">Showing search results for "<strong>@ViewBag.SearchTerm</strong>". <a href="/Transaction/Index" class="text-accent" style="color: var(--accent); text-decoration: underline;">Clear search</a></p>
+                    }
+                    else
+                    {
+                        <p class="text-secondary mb-0">Review all your financial logs and logs history.</p>
+                    }
+                </div>
+                <a href="/Transaction/Create" class="btn btn-primary">
+                    <i class="fa-solid fa-plus me-2"></i>Add Transaction
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Type</th>
+                            <th class="text-end">Amount</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <i class="fa-solid fa-receipt fs-1 d-block mb-3"></i>
+                                    @if (!string.IsNullOrEmpty(ViewBag.SearchTerm as string))
+                                    {
+                                        <span>No transactions found matching "<strong>@ViewBag.SearchTerm</strong>". <a href="/Transaction/Index" class="text-accent" style="color: var(--accent); text-decoration: underline;">Clear search</a></span>
+                                    }
+                                    else
+                                    {
+                                        <span>No transactions logged yet. Click "Add Transaction" to start.</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="text-nowrap text-secondary">
+                                        @item.Date.ToString("dd MMM yyyy")
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="category-icon-wrapper @(item.Category?.Type == "Income" ? "category-icon-income" : "category-icon-expense")">
+                                                <i class="@(string.IsNullOrEmpty(item.Category?.Icon) ? "fa-solid fa-tag" : item.Category.Icon)"></i>
+                                            </span>
+                                            <span class="fw-semibold">@(item.Category?.Name ?? "Uncategorized")</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-truncate" style="max-width: 180px;" title="@item.Description">
+                                        @(string.IsNullOrEmpty(item.Description) ? "-" : item.Description)
+                                    </td>
+                                    <td>
+                                        <span class="@(item.Type == "Income" ? "badge-income" : "badge-expense")">
+                                            <i class="fa-solid @(item.Type == "Income" ? "fa-arrow-trend-up" : "fa-arrow-trend-down") me-1"></i>
+                                            @item.Type
+                                        </span>
+                                    </td>
+                                    <td class="text-end fw-bold @(item.Type == "Income" ? "text-success" : "text-danger")">
+                                        @(item.Type == "Income" ? "+" : "-") Rs. @item.Amount.ToString("N2")
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="/Transaction/Edit/@item.TransactionId" class="btn btn-secondary btn-sm me-1" title="Edit Transaction">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </a>
+                                        <a href="/Transaction/Delete/@item.TransactionId" class="btn btn-danger btn-sm" title="Delete Transaction">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Quick Stats -->
+    <div class="col-lg-3">
+        <div class="custom-card mb-4">
+            <h5 class="text-white mb-3">Logs Summary</h5>
+            
+            <div class="mb-4">
+                <span class="text-secondary small d-block mb-1">Total Logs</span>
+                <h3 class="text-white fw-bold">@totalTransactions</h3>
+            </div>
+
+            <div class="mb-3 pb-3 border-bottom border-secondary">
+                <span class="text-secondary small d-block mb-1">Total Income</span>
+                <h4 class="text-success fw-bold">Rs. @totalIncome.ToString("N2")</h4>
+            </div>
+
+            <div>
+                <span class="text-secondary small d-block mb-1">Total Expense</span>
+                <h4 class="text-danger fw-bold">Rs. @totalExpense.ToString("N2")</h4>
+            </div>
+        </div>
+
+        <div class="custom-card text-center py-4">
+            <span class="d-inline-flex align-items-center justify-content-center bg-dark text-success rounded-circle mb-3" style="width: 50px; height: 50px;">
+                <i class="fa-solid fa-shield-halved text-success"></i>
+            </span>
+            <h6 class="text-white">Encrypted Logs</h6>
+            <p class="text-secondary small mb-0 px-2">Your financial records are isolated and securely linked to your account.</p>
+        </div>
+    </div>
+</div>

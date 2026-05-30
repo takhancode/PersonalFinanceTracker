@@ -1,7 +1,7 @@
 @model PersonalFinanceTracker.Models.Transaction
 
 @{
-    ViewData["Title"] = "Add Transaction";
+    ViewData["Title"] = "Edit Transaction";
 }
 
 <div class="row justify-content-center">
@@ -10,11 +10,12 @@
             <!-- Form Card -->
             <div class="col-md-7">
                 <div class="custom-card">
-                    <h3 class="mb-2 text-white">Add Transaction</h3>
-                    <p class="text-secondary mb-4">Record your earnings or spendings to keep your tracker current.</p>
+                    <h3 class="mb-2 text-white">Edit Transaction</h3>
+                    <p class="text-secondary mb-4">Modify the settings for your transaction below.</p>
 
-                    <form method="post" asp-action="Create">
+                    <form method="post" asp-action="Edit">
                         @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="TransactionId" />
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                         <div class="row">
@@ -54,20 +55,20 @@
 
                             <div class="col-md-6 mb-4">
                                 <label asp-for="Date" class="form-label">Transaction Date</label>
-                                <input asp-for="Date" type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                                <input asp-for="Date" type="date" class="form-control" asp-format="{0:yyyy-MM-dd}" required />
                                 <span asp-validation-for="Date" class="text-danger"></span>
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <label asp-for="Description" class="form-label">Description / Note</label>
-                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Add custom notes (e.g. weekly groceries, office salary)..."></textarea>
+                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Add custom notes..."></textarea>
                             <span asp-validation-for="Description" class="text-danger"></span>
                         </div>
 
                         <div class="d-flex gap-3 mt-5">
                             <button type="submit" class="btn btn-primary px-4">
-                                <i class="fa-solid fa-check me-2"></i>Save Logs
+                                <i class="fa-solid fa-save me-2"></i>Save Changes
                             </button>
                             <a href="/Transaction/Index" class="btn btn-secondary px-4">Cancel</a>
                         </div>
@@ -75,15 +76,15 @@
                 </div>
             </div>
 
-            <!-- Side Card Graphic -->
+            <!-- Side Card Info -->
             <div class="col-md-5">
                 <div class="custom-card d-flex flex-column align-items-center justify-content-center text-center h-100 py-5">
                     <span class="d-inline-flex align-items-center justify-content-center bg-dark text-success rounded-circle mb-4" style="width: 75px; height: 75px;">
-                        <i class="fa-solid fa-receipt fs-1 text-success"></i>
+                        <i class="fa-solid fa-pen-to-square fs-1 text-success"></i>
                     </span>
-                    <h4 class="text-white">Track Logs</h4>
+                    <h4 class="text-white">Edit Records</h4>
                     <p class="text-secondary px-3">
-                        Regular logs of your transactions allow the dashboard to present live statistics, charts, budget updates, and accurate reports.
+                        Need to adjust details? Modifying your logged transactions immediately updates your dashboard widgets and category distribution charts.
                     </p>
                 </div>
             </div>

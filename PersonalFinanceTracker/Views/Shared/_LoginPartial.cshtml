@@ -1,26 +1,38 @@
-﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Identity
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
 
-<ul class="navbar-nav">
+<ul class="navbar-nav login-nav-list">
 @if (SignInManager.IsSignedIn(User))
 {
-    <li class="nav-item">
-        <a  class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @User.Identity?.Name!</a>
+    <li class="nav-item login-nav-item">
+        <a class="nav-link text-dark d-flex align-items-center gap-2" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage Profile" data-tooltip="Manage Profile">
+            <span class="nav-icon"><i class="fa-solid fa-gear"></i></span>
+            <span class="nav-label">Hello @(User.Identity?.Name?.Split('@')[0] ?? User.Identity?.Name)!</span>
+        </a>
     </li>
-    <li class="nav-item">
-        <form  class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-            <button  type="submit" class="nav-link btn btn-link text-dark">Logout</button>
+    <li class="nav-item login-nav-item">
+        <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+            <button type="submit" class="nav-link btn btn-link text-dark d-flex align-items-center gap-2 w-100 text-start" title="Logout" data-tooltip="Logout">
+                <span class="nav-icon"><i class="fa-solid fa-right-from-bracket"></i></span>
+                <span class="nav-label">Logout</span>
+            </button>
         </form>
     </li>
 }
 else
 {
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Register</a>
+    <li class="nav-item login-nav-item">
+        <a class="nav-link text-dark d-flex align-items-center gap-2" asp-area="Identity" asp-page="/Account/Register" title="Register" data-tooltip="Register">
+            <span class="nav-icon"><i class="fa-solid fa-user-plus"></i></span>
+            <span class="nav-label">Register</span>
+        </a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
+    <li class="nav-item login-nav-item">
+        <a class="nav-link text-dark d-flex align-items-center gap-2" asp-area="Identity" asp-page="/Account/Login" title="Login" data-tooltip="Login">
+            <span class="nav-icon"><i class="fa-solid fa-right-to-bracket"></i></span>
+            <span class="nav-label">Login</span>
+        </a>
     </li>
 }
 </ul>
