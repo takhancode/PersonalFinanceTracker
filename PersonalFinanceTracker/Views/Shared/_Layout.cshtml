@@ -1,3 +1,10 @@
+@inject Microsoft.AspNetCore.Identity.UserManager<Microsoft.AspNetCore.Identity.IdentityUser> UserManager
+@inject PersonalFinanceTracker.Services.FinanceAlertService AlertService
+@{
+    var currentUserId = UserManager.GetUserId(User) ?? "";
+    var systemNotifications = await AlertService.GetNotificationsAsync(currentUserId);
+    var systemMessages = await AlertService.GetMessagesAsync(currentUserId);
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -159,10 +166,74 @@
                 </div>
 
                 <div class="topbar-right">
-                    <!-- Dynamic Light/Dark Theme Toggle Button -->
                     <button class="topbar-icon-btn me-1" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Theme" aria-label="Toggle Theme">
                         <i class="fa-solid fa-moon" id="themeToggleIcon"></i>
                     </button>
+
+                    <div class="dropdown me-1">
+                        <button class="topbar-icon-btn position-relative" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                            <i class="fa-regular fa-bell"></i>
+                            @if (systemNotifications.Any(n => n.Type != "success"))
+                            {
+                                <span class="topbar-badge"></span>
+                            }
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end custom-dropdown-menu p-0" aria-labelledby="notificationsDropdown">
+                            <div class="dropdown-header d-flex justify-content-between align-items-center">
+                                <span>Notifications</span>
+                                <span class="badge bg-primary rounded-pill">@(systemNotifications.Count(n => n.Type != "success"))</span>
+                            </div>
+                            <div class="dropdown-list-wrapper">
+                                @foreach (var item in systemNotifications)
+                                {
+                                    <div class="dropdown-item-custom">
+                                        <div class="item-icon bg-@item.Type-subtle text-@item.Type">
+                                            <i class="@item.Icon"></i>
+                                        </div>
+                                        <div class="item-content">
+                                            <p class="item-title text-@item.Type">@item.Title</p>
+                                            <p class="item-desc">@item.Message</p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dropdown me-1">
+                        <button class="topbar-icon-btn position-relative" id="messagesDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Messages">
+                            <i class="fa-regular fa-message"></i>
+                            @if (systemMessages.Any())
+                            {
+                                <span class="topbar-badge"></span>
+                            }
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end custom-dropdown-menu p-0" aria-labelledby="messagesDropdown">
+                            <div class="dropdown-header d-flex justify-content-between align-items-center">
+                                <span>Financial Tips</span>
+                                <span class="badge bg-primary rounded-pill">@systemMessages.Count</span>
+                            </div>
+                            <div class="dropdown-list-wrapper">
+                                @foreach (var item in systemMessages)
+                                {
+                                    <div class="dropdown-item-custom">
+                                        <div class="item-icon bg-info-subtle text-info">
+                                            <i class="fa-solid fa-lightbulb"></i>
+                                        </div>
+                                        <div class="item-content">
+                                            <div class="d-flex justify-content-between">
+                                                <p class="item-title">@item.Sender</p>
+                                                <span class="item-time">@item.TimeReceived</span>
+                                            </div>
+                                            <p class="item-subject">@item.Subject</p>
+                                            <p class="item-desc">@item.Body</p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="topbar-user-chip" role="button" tabindex="0" aria-label="User account">
                         <div class="topbar-user-chip-avatar">
                             @(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
